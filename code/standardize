@@ -1,0 +1,42 @@
+#!/usr/bin/env python
+import re
+import sys
+
+def subcat_split(cat):
+    if '\\n' in cat:
+        return cat.split('\\n')[-1]
+    else:
+        return cat
+
+def standardize_word(cat):
+    ret = "" 
+    for c in cat:
+        cur_c = ""
+        if c.isupper():
+            cur_c = c
+        elif c.islower():
+            cur_c = c.capitalize()
+        elif c == ' ':
+            cur_c = '_'
+        else:
+            cur_c = c
+        ret += cur_c
+    return ret[:len(ret) - 1]
+
+def standardize():
+    lines = []
+    for line in open("/home/cc/cs294/sp13/class/cs294-ay/hw3/data/subcats.txt", 'r'):
+        vals = line.split(',\'')
+        parent, subcat = \
+                standardize_word(vals[1]), standardize_word(subcat_split(vals[2]))
+        lines.append(parent + ' ' + subcat)
+    return lines
+
+def saveToFile(lines, fileName):
+    f = open(fileName, 'w')
+    for line in lines:
+        f.write("%s\n" % line)
+
+if __name__ == "__main__":
+    lines = standardize()
+    saveToFile(lines, "/home/cc/cs294/sp13/class/cs294-ay/hw3/data/subcats_processed.txt")

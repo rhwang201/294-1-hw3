@@ -1,0 +1,24 @@
+#!/usr/bin/env python
+import re
+import sys
+
+def explore(cat):
+    subcats = []
+    for line in open("/home/cc/cs294/sp13/class/cs294-ay/hw3/data/subcats_processed.txt", 'r'):
+        parent, subcat = line.split(' ')
+
+        if cat in parent:
+            print subcat
+            subcats.append(subcat)
+            subcats.extend(explore(subcat))
+    return subcats
+
+def saveToFile(subcats, fileName):
+    f = open(fileName, 'w')
+    for subcat in subcats:
+        f.write("%s\n" % subcat)
+
+if __name__ == "__main__":
+    category = sys.argv[1]
+    subcats = explore(category.upper())
+    saveToFile(subcats, "/home/cc/cs294/sp13/class/cs294-ay/hw3/data/%s.txt" % category)
