@@ -2,6 +2,8 @@
 import re
 import sys
 
+# This file processes subcats.txt into the format "PARENT SUB_CLASS"
+
 def subcat_split(cat):
     if '\\n' in cat:
         return cat.split('\\n')[-1]

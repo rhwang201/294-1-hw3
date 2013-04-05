@@ -2,15 +2,33 @@
 import re
 import sys
 
-def explore(cat):
+# Assuming you have standardized the subcats file, this script will find all
+# subcats of its first argument using a DFS.
+
+DEPTH_LIMIT = 2
+
+def explore(cat, depth=0):
+    #print "Current category: {0}".format(cat)
+    #print "Depth: {0}".format(depth)
+
     subcats = []
+    i = 0
+
+    # Prevent divergence
+    if depth >= DEPTH_LIMIT:
+        return subcats
+
     for line in open("/home/cc/cs294/sp13/class/cs294-ay/hw3/data/subcats_processed.txt", 'r'):
+        i += 1
+        if depth == 0 and i % 1000 == 0:
+            print "On line: {0}".format(i)
         parent, subcat = line.split(' ')
+        subcat = subcat.rstrip()
 
         if cat in parent:
-            print subcat
             subcats.append(subcat)
-            subcats.extend(explore(subcat))
+            subcats_subcats = explore(subcat, depth +1)
+            subcats.extend(subcats_subcats)
     return subcats
 
 def saveToFile(subcats, fileName):
