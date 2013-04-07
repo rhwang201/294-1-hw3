@@ -5,23 +5,21 @@ import sys
 # Assuming you have standardized the subcats file, this script will find all
 # subcats of its first argument using a DFS.
 
-DEPTH_LIMIT = 2
+DEPTH_LIMIT = 1
+subcats_processed = \
+        "/home/cc/cs294/sp13/class/cs294-ay/hw3/data/subcats_processed.txt"
+subcats_file = "/home/cc/cs294/sp13/class/cs294-ay/hw3/data/{0}_1.txt"
+subcats_top = "/home/cc/cs294/sp13/class/cs294-ay/hw3/data/{0}_top.txt"
 
+# DFS, kind of
 def explore(cat, depth=0):
-    #print "Current category: {0}".format(cat)
-    #print "Depth: {0}".format(depth)
-
     subcats = []
-    i = 0
 
     # Prevent divergence
     if depth >= DEPTH_LIMIT:
         return subcats
 
-    for line in open("/home/cc/cs294/sp13/class/cs294-ay/hw3/data/subcats_processed.txt", 'r'):
-        i += 1
-        if depth == 0 and i % 1000 == 0:
-            print "On line: {0}".format(i)
+    for line in open(subcats_processed, 'r'):
         parent, subcat = line.split(' ')
         subcat = subcat.rstrip()
 
@@ -31,12 +29,21 @@ def explore(cat, depth=0):
             subcats.extend(subcats_subcats)
     return subcats
 
+# Write
 def saveToFile(subcats, fileName):
     f = open(fileName, 'w')
     for subcat in subcats:
         f.write("%s\n" % subcat)
 
+# Main
 if __name__ == "__main__":
     category = sys.argv[1]
+    #subcats = []
+    #i = 0
+    #for subcat in open(subcats_top.format(category)):
+    #    if i % 10 == 0:
+    #        print "iteration %s" % i
+    #    subcats.extend(explore(subcat))
+    #    i += 1
     subcats = explore(category.upper())
-    saveToFile(subcats, "/home/cc/cs294/sp13/class/cs294-ay/hw3/data/%s.txt" % category)
+    saveToFile(subcats,  subcats_top.format(category))
