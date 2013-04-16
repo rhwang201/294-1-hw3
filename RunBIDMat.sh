@@ -13,8 +13,9 @@ export JCUDA_LIBS="${JCUDA_LIBDIR}/jcuda-${JCUDA_VERSION}.jar:${JCUDA_LIBDIR}/jc
 export MATIO_LIBS="lib/BIDMatWithHDFS.jar" #MODIFY THIS WITH BIDMatWithHDFS jar
 export HADOOP_LIBS="/home/aa/projects/hadoop/hadoop/hadoop-core-1.0.3.jar:/home/aa/projects/hadoop/hadoop/lib/commons-logging-1.1.1.jar" #MODIFY THIS WITH HADOOP LIBS
 export SCALA_LIBS="${SCALA_ROOT}/jline.jar:${SCALA_ROOT}/scala-compiler.jar:${SCALA_ROOT}/scala-library.jar:${SCALA_ROOT}/scalap.jar:${SCALA_ROOT}/scalacheck.jar:${SCALA_ROOT}/scala-dbc.jar:${SCALA_ROOT}/scala-partest.jar:${SCALA_ROOT}/scala-swing.jar"
+export LUCENE_LIBS="lib/lucene-analyzers-common-4.2.1.jar:lib/lucene-core-4.2.1.jar"
 
-export ALL_LIBS="${SCALA_LIBS}:${MATIO_LIBS}:${HADOOP_LIBS}:${BIDMAT_LIBS}:${JCUDA_LIBS}:${JAVA_HOME}/lib/tools.jar"
+export ALL_LIBS="${SCALA_LIBS}:${MATIO_LIBS}:${HADOOP_LIBS}:${BIDMAT_LIBS}:${JCUDA_LIBS}:${JAVA_HOME}/lib/tools.jar:${LUCENE_LIBS}"
 
 export LD_LIBRARY_PATH="${BIDMAT_ROOT}/lib/linux64:${BIDMAT_ROOT}/lib/linux64/JCUDA4.2:/usr/local/cuda-4.2/lib64:${LD_LIBRARY_PATH}"
 
@@ -23,4 +24,4 @@ export HADOOP_CLASSPATH="${ALL_LIBS}"
 #export HADOOP_CLASSPATH=lib/scala-library.jar:lib/BIDMat.jar:lib/jline-2.9.2.jar
 export LIB_JARS=`echo ${HADOOP_CLASSPATH} | sed s/:/,/g`
 
-hadoop jar runJar.jar -libjars ${LIB_JARS}  "BIDMatExample" input output
+hadoop jar jars/tokenize.jar "Tokenize" -libjars ${LIB_JARS} /cs294_1/wikipedia/enwiki_1pct.xml output
