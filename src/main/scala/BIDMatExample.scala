@@ -14,8 +14,6 @@ import java.io.PrintWriter
 import org.apache.commons.cli.Options
 import BIDMatWithHDFS._;
 
-
-
 object BIDMatExample extends Configured with Tool {
 
   class Map extends Mapper[LongWritable, Text, LongWritable, MatIO] {
@@ -59,9 +57,8 @@ object BIDMatExample extends Configured with Tool {
     }
   }
   
-  def run(args: Array[String]) =
-  {
-		  var conf = super.getConf()
+  def run(args: Array[String]) = {
+    var conf = super.getConf()
 //		  Configuration.dumpConfiguration(conf,new PrintWriter(System.out)) // for verfying your conf file 
 //	      println("Libjars: " + conf.get("tmpjars")); //for making sure your jars have been include
 	      var job : Job = new Job(conf,"BIDMatExample")
