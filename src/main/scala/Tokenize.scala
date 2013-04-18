@@ -1,15 +1,12 @@
 // Richard Hwang, David Huang
 // CS294-1 Assignment 3
 
-// TODO TupleWritable isn't working
-
 import java.io.IOException
 import java.util._
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.conf._
 import org.apache.hadoop.io._
 import org.apache.hadoop.mapreduce._
-//import org.apache.hadoop.mapred.join.TupleWritable
 import org.apache.hadoop.util._
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat
@@ -38,29 +35,35 @@ object Tokenize extends Configured with Tool {
       tok reset ()
       while (tok incrementToken ())
       {
-        var token : String = charTerm buffer () toString ()
+        var token : String = charTerm toString ()
         context write (new Text(token), one)
       }
     }
   }
 
-  class Reduce extends Reducer[Text, IntWritable, Text, TupleWritable] {
+  class Reduce extends Reducer[Text, IntWritable, Text, ArrayWritable] {
+    val result = new IntWritable()
     override def reduce(key: Text, values: java.lang.Iterable[IntWritable],
-        context: Reducer[Text, IntWritable, Text, TupleWritable]#Context) {
-      var count : Int = 0
-      var valsIter = values.iterator()
-      while (valsIter.hasNext())
-        count += 1
-      var toWrite : Array[Writable] = 
-          Array(new IntWritable(key hashCode ()), new IntWritable(count))
-      var gonnaWrite : TupleWritable = new TupleWritable(toWrite)
-      context write (key, gonnaWrite)
+        context: Reducer[Text, IntWritable, Text, ArrayWritable]#Context) {
+      var r : Int = 0
+      var iter = values iterator ()
+      while (iter hasNext ())
+        r += iter next () get ()
+      result set (r)
+      var pre_array : Array[Writable] = 
+          Array(new IntWritable(key toString () hashCode ()), result)
+      var id_count : ArrayWritable = 
+          new ArrayWritable(classOf[IntWritable], pre_array)
+      context write (key, id_count)
     }
   }
 
   def run(args: Array[String]) = {
     var conf = super.getConf()
-	  var job : Job = new Job(conf,"Tokenize")
+    conf set ("xmlinput.start", "<page>")
+    conf set ("xmlinput.end", "</page>")
+
+	  var job : Job = new Job(conf,"tokenize dem pages")
 		job setJarByClass(this.getClass())
 
 		job setMapperClass classOf[Map]
@@ -69,7 +72,7 @@ object Tokenize extends Configured with Tool {
 
 		job setReducerClass classOf[Reduce]
 	  job setOutputKeyClass classOf[Text]
-	  job setOutputValueClass classOf[TupleWritable]
+	  job setOutputValueClass classOf[ArrayWritable]
 
   	FileInputFormat.addInputPath(job, new Path(args(0)))
   	FileOutputFormat.setOutputPath(job, new Path(args(1)))
