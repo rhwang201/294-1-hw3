@@ -1,6 +1,8 @@
 // Richard Hwang, David Huang
 // CS294-1 Assignment 3
 
+// This outputs token counts.
+
 import java.io.IOException
 import java.util._
 import org.apache.hadoop.fs.Path
@@ -41,20 +43,17 @@ object Tokenize extends Configured with Tool {
     }
   }
 
-  class Reduce extends Reducer[Text, IntWritable, Text, ArrayWritable] {
-    val result = new IntWritable()
+  class Reduce extends Reducer[Text, IntWritable, Text, LongWritable] {
+    val result = new LongWritable()
     override def reduce(key: Text, values: java.lang.Iterable[IntWritable],
-        context: Reducer[Text, IntWritable, Text, ArrayWritable]#Context) {
-      var r : Int = 0
+        context: Reducer[Text, IntWritable, Text, LongWritable]#Context) {
+      var r : Long = 0
       var iter = values iterator ()
       while (iter hasNext ())
         r += iter next () get ()
       result set (r)
-      var pre_array : Array[Writable] = 
-          Array(new IntWritable(key toString () hashCode ()), result)
-      var id_count : ArrayWritable = 
-          new ArrayWritable(classOf[IntWritable], pre_array)
-      context write (key, id_count)
+      var count : LongWritable = result
+      context write (key, count)
     }
   }
 
@@ -63,7 +62,7 @@ object Tokenize extends Configured with Tool {
     conf set ("xmlinput.start", "<page>")
     conf set ("xmlinput.end", "</page>")
 
-	  var job : Job = new Job(conf,"tokenize dem pages")
+	  var job : Job = new Job(conf,"bb gerl")
 		job setJarByClass(this.getClass())
 
 		job setMapperClass classOf[Map]
@@ -72,7 +71,7 @@ object Tokenize extends Configured with Tool {
 
 		job setReducerClass classOf[Reduce]
 	  job setOutputKeyClass classOf[Text]
-	  job setOutputValueClass classOf[ArrayWritable]
+	  job setOutputValueClass classOf[LongWritable]
 
   	FileInputFormat.addInputPath(job, new Path(args(0)))
   	FileOutputFormat.setOutputPath(job, new Path(args(1)))

@@ -1,0 +1,10 @@
+Game plan
+
+  Generate token counts
+  Power law - keep only top 10,000
+  Create serialized hashset, {token -> unique_id}
+  Generate Bag of Words
+    Split on page
+      For each word
+        Add to vector if in hashset (index is unique_id)
+      Emit y, x  to form [Y X]
