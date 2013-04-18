@@ -9,7 +9,7 @@ import org.apache.hadoop.fs.Path
 import org.apache.hadoop.conf._
 import org.apache.hadoop.io._
 import org.apache.hadoop.mapreduce._
-import org.apache.hadoop.mapreduce.lib.join.TupleWritable
+//import org.apache.hadoop.mapred.join.TupleWritable
 import org.apache.hadoop.util._
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat
@@ -51,9 +51,10 @@ object Tokenize extends Configured with Tool {
       var valsIter = values.iterator()
       while (valsIter.hasNext())
         count += 1
-      var toWrite : Array[Writable] = Array(IntWritable(key hashCode ()), IntWritable(count))
-      toWrite = new TupleWritable(toWrite)
-      context write (key, toWrite)
+      var toWrite : Array[Writable] = 
+          Array(new IntWritable(key hashCode ()), new IntWritable(count))
+      var gonnaWrite : TupleWritable = new TupleWritable(toWrite)
+      context write (key, gonnaWrite)
     }
   }
 
@@ -63,13 +64,12 @@ object Tokenize extends Configured with Tool {
 		job setJarByClass(this.getClass())
 
 		job setMapperClass classOf[Map]
+		job setMapOutputKeyClass classOf[Text]
+		job setMapOutputValueClass classOf[IntWritable]
 
 		job setReducerClass classOf[Reduce]
 	  job setOutputKeyClass classOf[Text]
-	  job setOutputValueClass classOf[IntWritable]
-
-		job setMapOutputKeyClass classOf[Text]
-		job setMapOutputValueClass classOf[TupleWritable]
+	  job setOutputValueClass classOf[TupleWritable]
 
   	FileInputFormat.addInputPath(job, new Path(args(0)))
   	FileOutputFormat.setOutputPath(job, new Path(args(1)))
