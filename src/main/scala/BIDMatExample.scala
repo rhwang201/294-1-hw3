@@ -47,12 +47,14 @@ object BIDMatExample extends Configured with Tool {
       {
         var matIO = valsIter.next
         var mat = matIO.mat match
-      {
-        case fMat : FMat => fMat;
-      }
+        {
+          case fMat : FMat => fMat;
+        }
       sumFMat += mat
     }
-    var sBuilder = (new StringBuilder /: sumFMat.data) ((soFar, newFloat) => soFar.append(newFloat + "\t"))
+    var sBuilder =
+      (new StringBuilder /: sumFMat.data) ((soFar, newFloat) =>
+        soFar.append(newFloat + "\t"))
     var toWrite = new Text(sBuilder.toString())
     context write (null, toWrite)
     }

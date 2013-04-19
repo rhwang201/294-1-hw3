@@ -12,7 +12,7 @@ import org.apache.hadoop.util._
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat
 import BIDMat.MatFunctions._
-import BIDMat.{IMat,FMat}
+import BIDMat.{IMat,FMat,SMat}
 import scala.reflect.Manifest
 import org.apache.commons.cli.Options
 import BIDMatWithHDFS._;
@@ -112,17 +112,30 @@ object Bag extends Configured with Tool {
     }
   }
 
-  class Reduce extends Reducer[IntWritable, MatIO, IntWritable, MatIO] {
+  class Reduce extends Reducer[IntWritable, MatIO, IntWritable, Text] {
+    var toWrite: Text= new Text()
+
     override def reduce(key: IntWritable, values: java.lang.Iterable[MatIO],
-        context: Reducer[IntWritable, MatIO, IntWritable, MatIO]#Context) {
+        context: Reducer[IntWritable, MatIO, IntWritable, Text]#Context) {
       var valsIter = values iterator ()
-      while (valsIter hasNext ())
-        context write (key, valsIter.next)
+      while (valsIter hasNext ()) {
+        var matIO = valsIter.next.mat match {
+          case sMat: SMat => sMat;
+        }
+        var sBuilder =
+          (new StringBuilder /: matIO.data) ((soFar, newFloat) =>
+            soFar.append(newFloat + " "))
+        toWrite set (sBuilder toString ())
+        context write (key, toWrite)
+      }
     }
   }
 
   def run(args: Array[String]) = {
     var conf = super.getConf()
+    conf set ("xmlinput.start", "<page>")
+    conf set ("xmlinput.end", "</page>")
+
 	  var job : Job = new Job(conf,"BagOfWords")
 		job setJarByClass(this.getClass())
 
