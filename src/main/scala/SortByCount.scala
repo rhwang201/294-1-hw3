@@ -26,6 +26,8 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 object SortByCount extends Configured with Tool {
 
   class Map extends Mapper[LongWritable, Text, LongWritable, Text] {
+    var count : LongWritable = new LongWritable()
+    var token : Text = new Text()
 
     override def map(key: LongWritable, value: Text,
           context: Mapper[LongWritable, Text, LongWritable, Text]#Context) {
@@ -34,8 +36,8 @@ object SortByCount extends Configured with Tool {
       var token_str : String = text(0)
       var count_i : Long = text(1).toLong
 
-      var token : Text = new Text(token_str)
-      var count : LongWritable = new LongWritable(count_i)
+      text set (token_str)
+      count set (count_i)
 
       context write (count, token)
     }

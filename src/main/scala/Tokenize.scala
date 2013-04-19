@@ -31,14 +31,21 @@ object Tokenize extends Configured with Tool {
     /* Emit each token from WikipediaTokenizer */
     override def map(key: LongWritable, value: Text,
           context: Mapper[LongWritable, Text, Text, IntWritable]#Context) {
-      var tok : WikipediaTokenizer = new WikipediaTokenizer(new StringReader(value.toString()))
-      var charTerm : CharTermAttribute = tok addAttribute classOf[CharTermAttribute]
+      var string_text : String = value toString ()
+      var string_split : Array[String] = string_text split ("\n")
+      // Check for bad splits
+      if (string_split(0).trim == "<page>") {
+        var tok : WikipediaTokenizer =
+            new WikipediaTokenizer(new StringReader(string_text))
+        var charTerm : CharTermAttribute =
+            tok addAttribute classOf[CharTermAttribute]
 
-      tok reset ()
-      while (tok incrementToken ())
-      {
-        var token : String = charTerm toString ()
-        context write (new Text(token), one)
+        tok reset ()
+        while (tok incrementToken ())
+        {
+          var token : String = charTerm toString ()
+          context write (new Text(token), one)
+        }
       }
     }
   }
