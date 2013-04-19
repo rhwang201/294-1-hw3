@@ -4,6 +4,7 @@
 *.aux
 *.class
 *.log
+*.swp
 
 # sbt specific
 dist/*

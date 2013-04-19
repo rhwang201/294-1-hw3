@@ -1,3 +1,19 @@
+Game Plan
+  [Check] Generate token counts
+  [Written] Power law - keep only top 10,000
+  [Written] Create serialized hashset, {token -> unique_id}
+  [Written] Generate Bag of Words
+    Split on page
+      For each word
+        Add to vector if in hashset (index is unique_id)
+      Emit y, x  to form [Y X]
+
+
+
+#####################
+ORIGINAL README BELOW
+#####################
+
 ScalaOnHadoop
 =============
 This is an sbt project.
