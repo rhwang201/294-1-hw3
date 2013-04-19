@@ -36,7 +36,7 @@ object SortByCount extends Configured with Tool {
       var token_str : String = text(0)
       var count_i : Long = text(1).toLong
 
-      text set (token_str)
+      token set (token_str)
       count set (count_i)
 
       context write (count, token)

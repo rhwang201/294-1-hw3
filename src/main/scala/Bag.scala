@@ -33,19 +33,19 @@ object Bag extends Configured with Tool {
     var matIO : MatIO = new MatIO()
 
     val tokens_in = new FileInputStream("out") // TODO check rel path
-    val bytes =
+    val tokens_bytes =
         Stream.continually(tokens_in.read).takeWhile(-1 !=).map(_.toByte).toArray
     val token_ids : HashMap[String, Int] =
-        Marshal.load[HashMap[String, Int]](bytes)
+        Marshal.load[HashMap[String, Int]](tokens_bytes)
 
     val cats_in = new FileInputStream("out") // TODO check rel path
-    val bytes =
+    val cats_bytes =
         Stream.continually(cats_in.read).takeWhile(-1 !=).map(_.toByte).toArray
     val subcats : HashSet[String] =
-        Marshal.load[HashSet[String]](bytes)
+        Marshal.load[HashSet[String]](cats_bytes)
 
     val icol_row : BIDMat.IMat = icol(0 to num_features-1)
-    val icol_col : BIDMat.IMat = ones(num_features, 1)
+    val icol_col : BIDMat.IMat = iones(num_features, 1)
 
     val cat_pattern : String = ".*Category:.*"
 
@@ -54,6 +54,7 @@ object Bag extends Configured with Tool {
           context: Mapper[LongWritable, Text, IntWritable, MatIO]#Context) {
       var string_text : String = value toString ()
       var string_split : Array[String] = string_text split ("\n")
+
       var category : Int = class_label(string_split)
 
       // Check for bad splits
@@ -64,7 +65,7 @@ object Bag extends Configured with Tool {
         var charTerm : CharTermAttribute =
             tok addAttribute classOf[CharTermAttribute]
 
-        var cur_counts : BIDMat.IMat = zeros(num_features, 1)
+        var cur_counts : BIDMat.IMat = izeros(num_features, 1)
 
         // For each token
         tok reset ()
@@ -92,24 +93,22 @@ object Bag extends Configured with Tool {
 
     /* Returns the class label for text and subcats, -1 if cannot
      * find Category. */
-    def class_label(text: String):Int = {
-      var match : bool = false
-      text.foreach { line =>
+    def class_label(lines : Array[String]):Int = {
+      var found_match : Boolean = false
+      lines.foreach { line =>
         // Category line
         if (line matches (cat_pattern)) {
           // Check if this is in subcats
           var cat : String = (line split (":"))(1) dropRight (2)
-          if (subcats contains (cat)) {
-            return true
-          }
-          match = true
+          if (subcats contains (cat))
+            return 1
+          found_match = true
         }
       }
-      if !match {
+      if (!found_match)
         return -1
-      } else {
+      else
         return 0
-      }
     }
   }
 

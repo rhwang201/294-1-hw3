@@ -6,13 +6,13 @@
 import scala.reflect.Manifest
 import scala.io.Source
 import scala.util.Marshal
-import scala.collections.mutable.HashMap
+import scala.collection.mutable.HashMap
 import java.io._
 
 object HashTokens {
 
   def main(args: Array[String]) {
-    var token_ids : HashMap = HashMap[String, Int]()
+    var token_ids : HashMap[String, Int] = HashMap[String, Int]()
     var id : Int = 0
 
     for (line <- Source.fromFile("myfile.txt").getLines()) {
