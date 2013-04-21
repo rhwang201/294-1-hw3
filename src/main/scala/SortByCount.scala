@@ -5,6 +5,9 @@
 
 import java.io.IOException
 import java.util._
+import java.io.PrintWriter
+import java.io.StringReader
+
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.conf._
 import org.apache.hadoop.io._
@@ -12,11 +15,9 @@ import org.apache.hadoop.mapreduce._
 import org.apache.hadoop.util._
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat
-import BIDMat.MatFunctions._
-import BIDMat.{IMat,FMat}
+
 import scala.reflect.Manifest
-import java.io.PrintWriter
-import java.io.StringReader
+
 import org.apache.commons.cli.Options
 import BIDMatWithHDFS._;
 
@@ -31,15 +32,17 @@ object SortByCount extends Configured with Tool {
 
     override def map(key: LongWritable, value: Text,
           context: Mapper[LongWritable, Text, LongWritable, Text]#Context) {
-      var text : Array[String] = value toString () split (" ")
+      var text : Array[String] = value toString () split ("\\s+")
 
-      var token_str : String = text(0)
-      var count_i : Long = text(1).toLong
+      if (text.length == 2) {
+        var token_str : String = text(0)
+        var count_i : Long = text(1).toLong
 
-      token set (token_str)
-      count set (count_i)
+        token set (token_str)
+        count set (count_i)
 
-      context write (count, token)
+        context write (count, token)
+      }
     }
   }
 
@@ -47,25 +50,26 @@ object SortByCount extends Configured with Tool {
 
     override def reduce(key: LongWritable, values: java.lang.Iterable[Text],
         context: Reducer[LongWritable, Text, LongWritable, Text]#Context) {
-      var iter = values iterator ()
-      while (iter hasNext ())
-        context write (key, iter next ())
+      var iter = values.iterator()
+      while (iter hasNext)
+        context write (key, iter next)
     }
   }
 
   def run(args: Array[String]) = {
     var conf = super.getConf()
+    conf set ("mapred.max.split.size", "10000000")
 
-	  var job : Job = new Job(conf,"bb gerl")
+	  var job : Job = new Job(conf,"Sort token counts")
 		job setJarByClass(this.getClass())
 
 		job setMapperClass classOf[Map]
-		job setMapOutputKeyClass classOf[Text]
-		job setMapOutputValueClass classOf[LongWritable]
+		job setMapOutputKeyClass classOf[LongWritable]
+		job setMapOutputValueClass classOf[Text]
 
 		job setReducerClass classOf[Reduce]
-	  job setOutputKeyClass classOf[Text]
-	  job setOutputValueClass classOf[LongWritable]
+	  job setOutputKeyClass classOf[LongWritable]
+	  job setOutputValueClass classOf[Text]
 
   	FileInputFormat.addInputPath(job, new Path(args(0)))
   	FileOutputFormat.setOutputPath(job, new Path(args(1)))

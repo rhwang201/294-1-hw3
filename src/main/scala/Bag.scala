@@ -2,23 +2,28 @@
 // CS294-1 Assignment 3
 
 // Generate Bag of Words and target vector
+// TODO <text> and tok.CATEGORY
 
 import java.util._
+import java.io._
+
 import org.apache.hadoop.fs.Path
+import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.conf._
 import org.apache.hadoop.io._
 import org.apache.hadoop.mapreduce._
 import org.apache.hadoop.util._
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat
+import org.apache.commons.cli.Options
+
 import BIDMat.MatFunctions._
 import BIDMat.{IMat,FMat,SMat}
-import scala.reflect.Manifest
-import org.apache.commons.cli.Options
 import BIDMatWithHDFS._;
+
+import scala.reflect.Manifest
 import scala.util.Marshal
 import scala.io.Source
-import java.io._
 import scala.collection.mutable.HashMap
 
 import org.apache.lucene.analysis.wikipedia.WikipediaTokenizer;
@@ -32,19 +37,24 @@ object Bag extends Configured with Tool {
     var label : IntWritable = new IntWritable();
     var matIO : MatIO = new MatIO()
 
-    val tokens_in = new FileInputStream("out") // TODO check rel path
-    val tokens_bytes =
-        Stream.continually(tokens_in.read).takeWhile(-1 !=).map(_.toByte).toArray
-    val token_ids : HashMap[String, Int] =
-        Marshal.load[HashMap[String, Int]](tokens_bytes)
+    var fs : FileSystem  = FileSystem.get(new Configuration())
+    var in : InputStream = fs.open(new Path("/cs294_1/hw3-ay/token_ids.ser"))
+    var objReader : ObjectInputStream = new ObjectInputStream(in)
+    var token_ids : HashMap[String, Int] = objReader.readObject().asInstanceOf[HashMap[String, Int]]
 
-    val cats_in = new FileInputStream("out") // TODO check rel path
+    //val tokens_in = new FileInputStream("out") // TODO check rel path
+    //val tokens_bytes =
+    //    Stream.continually(tokens_in.read).takeWhile(-1 !=).map(_.toByte).toArray
+    //val token_ids : HashMap[String, Int] =
+    //    Marshal.load[HashMap[String, Int]](tokens_bytes)
+
+    val cats_in = new FileInputStream("") // TODO
     val cats_bytes =
         Stream.continually(cats_in.read).takeWhile(-1 !=).map(_.toByte).toArray
     val subcats : HashSet[String] =
         Marshal.load[HashSet[String]](cats_bytes)
 
-    val icol_row : BIDMat.IMat = icol(0 to num_features-1)
+    var icol_row : BIDMat.IMat = icol(0 to num_features-1)
     val icol_col : BIDMat.IMat = iones(num_features, 1)
 
     val cat_pattern : String = ".*Category:.*"
@@ -52,16 +62,18 @@ object Bag extends Configured with Tool {
     /* Emit each [y X] */
     override def map(key: LongWritable, value: Text,
           context: Mapper[LongWritable, Text, IntWritable, MatIO]#Context) {
+      icol_row = icol(0 to num_features-1)
+
       var string_text : String = value toString ()
-      var string_split : Array[String] = string_text split ("\n")
+      var text : String = get_text(string_text)
+      var category : Int = class_label(text)
 
-      var category : Int = class_label(string_split)
-
-      // Check for bad splits
-      if (string_split(0).trim == "<page>" || category == -1) {
+      if (text != "") {
         // Initialize tokenizer
         var tok : WikipediaTokenizer =
-            new WikipediaTokenizer(new StringReader(string_text))
+            new WikipediaTokenizer(new StringReader(text))
+
+
         var charTerm : CharTermAttribute =
             tok addAttribute classOf[CharTermAttribute]
 
@@ -83,18 +95,23 @@ object Bag extends Configured with Tool {
             sparse(icol_row, icol_col, cur_counts, num_features, 1)
         matIO.mat = feature_vect
 
-        // Only write if we found a class
-        if (category != -1) {
-          label set (category)
-          context write (label, matIO)
-        }
+        label set (category)
+        context write (label, matIO)
       }
     }
 
+    /* */
+    def get_text(page: String):String = {
+      return ""
+    }
+
+
     /* Returns the class label for text and subcats, -1 if cannot
      * find Category. */
-    def class_label(lines : Array[String]):Int = {
+    def class_label(text : String):Int = {
       var found_match : Boolean = false
+      var lines = text split ("\n")
+
       lines.foreach { line =>
         // Category line
         if (line matches (cat_pattern)) {
@@ -113,6 +130,7 @@ object Bag extends Configured with Tool {
   }
 
   class Reduce extends Reducer[IntWritable, MatIO, IntWritable, Text] {
+
     var toWrite: Text= new Text()
 
     override def reduce(key: IntWritable, values: java.lang.Iterable[MatIO],

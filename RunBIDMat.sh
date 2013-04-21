@@ -24,4 +24,4 @@ export HADOOP_CLASSPATH="${ALL_LIBS}"
 #export HADOOP_CLASSPATH=lib/scala-library.jar:lib/BIDMat.jar:lib/jline-2.9.2.jar
 export LIB_JARS=`echo ${HADOOP_CLASSPATH} | sed s/:/,/g`
 
-hadoop jar jars/tokenize.jar "Tokenize" -libjars ${LIB_JARS} /cs294_1/wikipedia/enwiki_1pct.xml output
+hadoop jar jars/wiki.jar "Bag" -libjars ${LIB_JARS} /cs294_1/wikipedia/enwiki_1pct.xml /cs294_1/hw3-ay/output

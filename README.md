@@ -1,3 +1,6 @@
+TODO
+  Do LogisticRegression map, specifically Stochastic Gradient Descent
+
 Game Plan
   [Check] Generate token counts
   [Written] Power law - keep only top 10,000

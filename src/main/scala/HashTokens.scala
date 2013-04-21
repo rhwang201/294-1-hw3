@@ -12,18 +12,20 @@ import java.io._
 object HashTokens {
 
   def main(args: Array[String]) {
-    var token_ids : HashMap[String, Int] = HashMap[String, Int]()
+    var token_ids : HashMap[String, Int] = new HashMap[String, Int]
     var id : Int = 0
 
-    for (line <- Source.fromFile("myfile.txt").getLines()) {
-      var token : String = (line split (" ")) (1)
+    for (line <-
+          Source.fromFile("/home/cc/cs294/sp13/class/cs294-ay/hw3/common_counts.txt") getLines) {
+      var token : String = (line split ("\\s+")) (1)
       token_ids(token) = id
       id += 1
     }
 
-    val out = new FileOutputStream("token_ids.ser")
-    out write (Marshal dump (token_ids))
-    out close ()
+    val out = 
+        new FileOutputStream("/home/cc/cs294/sp13/class/cs294-ay/hw3/token_ids.ser")
+    out write (Marshal dump token_ids)
+    out close
   }
 
 }

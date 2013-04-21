@@ -5,6 +5,9 @@
 
 import java.io.IOException
 import java.util._
+import java.io.PrintWriter
+import java.io.StringReader
+
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.conf._
 import org.apache.hadoop.io._
@@ -12,18 +15,21 @@ import org.apache.hadoop.mapreduce._
 import org.apache.hadoop.util._
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat
-import BIDMat.MatFunctions._
-import BIDMat.{IMat,FMat}
-import scala.reflect.Manifest
-import java.io.PrintWriter
-import java.io.StringReader
+
 import org.apache.commons.cli.Options
 import BIDMatWithHDFS._;
+
+import scala.reflect.Manifest
+import scala.collection.mutable.StringBuilder
 
 import org.apache.lucene.analysis.wikipedia.WikipediaTokenizer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 
 object Tokenize extends Configured with Tool {
+
+  val text_start_tag : String = ".*<text.*>.*"
+  val text_end_tag : String = ".*</text.*>.*"
+  val text_single_line : String = ".*<text.*>.*</text.*>.*"
 
   class Map extends Mapper[LongWritable, Text, Text, IntWritable] {
     var one: IntWritable = new IntWritable(1);
@@ -31,22 +37,44 @@ object Tokenize extends Configured with Tool {
     /* Emit each token from WikipediaTokenizer */
     override def map(key: LongWritable, value: Text,
           context: Mapper[LongWritable, Text, Text, IntWritable]#Context) {
-      var string_text : String = value toString ()
-      var string_split : Array[String] = string_text split ("\n")
-      // Check for bad splits
-      if (string_split(0).trim == "<page>") {
-        var tok : WikipediaTokenizer =
-            new WikipediaTokenizer(new StringReader(string_text))
-        var charTerm : CharTermAttribute =
-            tok addAttribute classOf[CharTermAttribute]
+      var string_text : String = value toString
+      var page_text : String = get_text(string_text)
 
-        tok reset ()
-        while (tok incrementToken ())
-        {
-          var token : String = charTerm toString ()
-          context write (new Text(token), one)
-        }
+      var tok : WikipediaTokenizer =
+          new WikipediaTokenizer(new StringReader(string_text))
+      var charTerm : CharTermAttribute =
+          tok addAttribute classOf[CharTermAttribute]
+
+      tok.reset()
+      while (tok incrementToken)
+      {
+        var token : String = charTerm toString ()
+        context write (new Text(token), one)
       }
+    }
+
+    /* Returns text from input, or empty String if no matching tags. */
+    def get_text(input: String):String = {
+      var string_split : Array[String] = input split ("\n")
+
+      var in_text : Boolean = false
+      var text: StringBuilder = new StringBuilder
+
+      string_split.foreach { line: String =>
+        if (line matches text_single_line) {
+          // Pass
+        } else if (line matches text_start_tag)
+          in_text = true
+        else if (in_text)
+          text append (line + "\n")
+        else if (line matches text_end_tag)
+          in_text = true
+      }
+
+      if (in_text)
+        return ""
+      else
+        return text toString
     }
   }
 
@@ -71,7 +99,7 @@ object Tokenize extends Configured with Tool {
     conf set ("xmlinput.start", "<page>")
     conf set ("xmlinput.end", "</page>")
 
-	  var job : Job = new Job(conf,"bb gerl")
+	  var job : Job = new Job(conf,"Tokenize")
 		job setJarByClass(this.getClass())
 
 		job setMapperClass classOf[Map]
