@@ -24,7 +24,10 @@ import BIDMatWithHDFS._;
 import scala.reflect.Manifest
 import scala.util.Marshal
 import scala.io.Source
+import scala.collection.mutable.HashSet
 import scala.collection.mutable.HashMap
+import scala.collection.mutable.Map
+import scala.collection.JavaConversions._
 
 import org.apache.lucene.analysis.wikipedia.WikipediaTokenizer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
@@ -37,18 +40,15 @@ object Bag extends Configured with Tool {
     var label : IntWritable = new IntWritable();
     var matIO : MatIO = new MatIO()
 
-    var fs : FileSystem  = FileSystem.get(new Configuration())
-    var in : InputStream = fs.open(new Path("/cs294_1/hw3-ay/token_ids.ser"))
-    var objReader : ObjectInputStream = new ObjectInputStream(in)
-    var token_ids : HashMap[String, Int] = objReader.readObject().asInstanceOf[HashMap[String, Int]]
+    var fs : FileSystem = FileSystem.get(new Configuration())
 
-    //val tokens_in = new FileInputStream("out") // TODO check rel path
-    //val tokens_bytes =
-    //    Stream.continually(tokens_in.read).takeWhile(-1 !=).map(_.toByte).toArray
-    //val token_ids : HashMap[String, Int] =
-    //    Marshal.load[HashMap[String, Int]](tokens_bytes)
+    var tokens_in : InputStream = fs.open(new Path("/cs294_1/hw3-ay/token_ids.ser"))
+    val tokens_bytes =
+        Stream.continually(tokens_in.read).takeWhile(-1 !=).map(_.toByte).toArray
+    val token_ids : HashMap[String, Int] =
+        Marshal.load[HashMap[String, Int]](tokens_bytes)
 
-    val cats_in = new FileInputStream("") // TODO
+    val cats_in : InputStream = fs.open(new Path("/cs294_1/hw3-ay/subcats.ser"))
     val cats_bytes =
         Stream.continually(cats_in.read).takeWhile(-1 !=).map(_.toByte).toArray
     val subcats : HashSet[String] =
@@ -65,13 +65,12 @@ object Bag extends Configured with Tool {
       icol_row = icol(0 to num_features-1)
 
       var string_text : String = value toString ()
-      var text : String = get_text(string_text)
-      var category : Int = class_label(text)
+      var category : Int = class_label(string_text)
 
-      if (text != "") {
+      if (category != -1) {
         // Initialize tokenizer
         var tok : WikipediaTokenizer =
-            new WikipediaTokenizer(new StringReader(text))
+            new WikipediaTokenizer(new StringReader(string_text))
 
 
         var charTerm : CharTermAttribute =
@@ -87,7 +86,7 @@ object Bag extends Configured with Tool {
 
           if (token_ids contains (token)) {
             var index : Int = token_ids(token)
-            cur_counts(index, 1) = cur_counts(index, 1) + 1
+            cur_counts(index, 0) = cur_counts(index, 0) + 1
           }
         }
 
@@ -99,12 +98,6 @@ object Bag extends Configured with Tool {
         context write (label, matIO)
       }
     }
-
-    /* */
-    def get_text(page: String):String = {
-      return ""
-    }
-
 
     /* Returns the class label for text and subcats, -1 if cannot
      * find Category. */
@@ -151,8 +144,8 @@ object Bag extends Configured with Tool {
 
   def run(args: Array[String]) = {
     var conf = super.getConf()
-    conf set ("xmlinput.start", "<page>")
-    conf set ("xmlinput.end", "</page>")
+    conf set ("xmlinput.start", "<text xml:space=\"preserve\">")
+    conf set ("xmlinput.end", "</text>")
 
 	  var job : Job = new Job(conf,"BagOfWords")
 		job setJarByClass(this.getClass())
