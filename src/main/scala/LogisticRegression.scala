@@ -74,12 +74,14 @@ object LogisticRegression extends Configured with Tool {
 
     /* Calculates the gradient of the log likelihood function */
     def grad_b(beta: FMat, point: SMat):FMat = {
+      
       return zeros(5,5) // TODO
     }
 
     /* Calculates P(Y=1|x) = 1 / (1 + exp(-beta^T * x)) */
     def logistic(beta: FMat, x: SMat):FMat = {
-      return zeros(5,5) // TODO
+      var p: Double = 1 / ( 1 + exp( -(beta.t * x)(0, 0) ) )
+      return p
     }
   }
 
